@@ -1,115 +1,10 @@
-// import express from 'express';
-// import { createServer } from 'http';
-// import { Server } from 'socket.io';
-// import cors from 'cors';
-// import { Message, User, DeliveryStatus } from './types/chat';
-// import { v4 as uuidv4 } from 'uuid';
-//
-// const app = express();
-// const httpServer = createServer(app);
-// const io = new Server(httpServer, {
-//   cors: {
-//     origin: "http://localhost:5173",
-//     methods: ["GET", "POST"]
-//   }
-// });
-//
-// app.use(cors());
-// app.use(express.json());
-//
-// // Хранилище сообщений (в реальном приложении должно быть в базе данных)
-// const messages: Message[] = [];
-//
-// // Хранилище пользователей онлайн
-// const onlineUsers = new Map<string, User>();
-//
-// io.on('connection', (socket) => {
-//   console.log('User connected:', socket.id);
-//
-//   // Обработка присоединения пользователя
-//   socket.on('user:join', (user: User) => {
-//     console.log('User joined:', user);
-//     onlineUsers.set(socket.id, user);
-//     socket.broadcast.emit('user:joined', user);
-//
-//     // Отправляем историю сообщений новому пользователю
-//     console.log('Sending message history:', messages);
-//     socket.emit('messages:history', messages);
-//   });
-//
-//   // Обработка отправки сообщения
-//   socket.on('message:send', (messageData: Partial<Message>) => {
-//     console.log('Received message data:', messageData);
-//     const user = onlineUsers.get(socket.id);
-//     if (!user) {
-//       console.log('User not found for socket:', socket.id);
-//       return;
-//     }
-//
-//     const newMessage: Message = {
-//       id: uuidv4(),
-//       content: messageData.content || '',
-//       sender: user,
-//       timestamp: new Date(),
-//       deliveryStatus: 'sent',
-//       attachments: messageData.attachments,
-//       quotedMessage: messageData.quotedMessage,
-//       formattedContent: messageData.formattedContent
-//     };
-//
-//     messages.push(newMessage);
-//     console.log('New message created:', newMessage);
-//
-//     // Отправляем сообщение всем пользователям
-//     io.emit('message:received', newMessage);
-//
-//     // Имитируем задержку доставки
-//     setTimeout(() => {
-//       newMessage.deliveryStatus = 'delivered';
-//       console.log('Updating message status to delivered:', newMessage.id);
-//       io.emit('message:status', {
-//         messageId: newMessage.id,
-//         status: 'delivered' as DeliveryStatus
-//       });
-//     }, 1000);
-//   });
-//
-//   // Обработка прочтения сообщения
-//   socket.on('message:read', (messageId: string) => {
-//     console.log('Message marked as read:', messageId);
-//     const message = messages.find(m => m.id === messageId);
-//     if (message) {
-//       message.deliveryStatus = 'read';
-//       io.emit('message:status', {
-//         messageId: message.id,
-//         status: 'read' as DeliveryStatus
-//       });
-//     }
-//   });
-//
-//   // Обработка отключения пользователя
-//   socket.on('disconnect', () => {
-//     const user = onlineUsers.get(socket.id);
-//     if (user) {
-//       console.log('User disconnected:', user);
-//       onlineUsers.delete(socket.id);
-//       socket.broadcast.emit('user:left', user);
-//     }
-//   });
-// });
-//
-// const PORT = process.env.PORT || 3005;
-//
-// httpServer.listen(PORT, () => {
-//   console.log(`Server is running on port ${PORT}`);
-// });
-
 import express from 'express';
 import { createServer } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
 import cors from 'cors';
 import { Message, User, DeliveryStatus } from './types/chat';
 import { v4 as uuidv4 } from 'uuid';
+import path from "path";
 
 const app = express();
 const httpServer = createServer(app);
@@ -117,6 +12,13 @@ const wss = new WebSocketServer({ server: httpServer });
 
 app.use(cors());
 app.use(express.json());
+
+app.use(express.static(path.join(__dirname, '..', '..')))
+
+// Роут для выдачи HTML
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', '..', 'index.html'));
+});
 
 // Хранилище сообщений (в реальном приложении должно быть в базе данных)
 const messages: Message[] = [];
