@@ -1,2 +1,7 @@
 backend/node_modules
 backend/dist
+
+# env files
+.env
+.env.*
+!.env.example
